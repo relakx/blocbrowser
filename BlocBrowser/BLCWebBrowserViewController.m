@@ -16,12 +16,11 @@
 
  @interface BLCWebBrowserViewController () <UIWebViewDelegate, UITextFieldDelegate, BLCAwesomeFloatingToolbarDelegate>
 
-@property (nonatomic, strong) UIWebView *webview;
+@property (nonatomic,strong) UIWebView *webview ;
 @property (nonatomic, strong) UITextField *textField;
 @property (nonatomic, strong) UIActivityIndicatorView *activityIndicator;
 @property (nonatomic, strong) BLCAwesomeFloatingToolbar *awesomeToolbar;
 @property (nonatomic, assign) NSUInteger frameCount;
-
 
 @end
 
@@ -51,6 +50,7 @@
         [mainView addSubview:viewToAdd];
     }
     self.view = mainView;
+    
 }
 
 - (void)viewDidLoad {
@@ -78,14 +78,21 @@
     self.textField.frame = CGRectMake(0, 0, width, itemHeight);
     self.webview.frame = CGRectMake(0, CGRectGetMaxY(self.textField.frame), width, browserHeight);
     
-    self.awesomeToolbar.frame = CGRectMake(20, 100, 280, 60);
+    if (self.awesomeToolbar.frame.size.height == 0) {
+        self.awesomeToolbar.frame = CGRectMake(20, 100, 280, 60);
+    }
     //TODO: Assignment 25, pinch gesture, fix error:
     //there will be code that sets a frame origin, only call that line of code when the frame.size.height == 0
 }
 
 #pragma mark - BLCAwesomeFloatingToolbarDelegate
 
-- (void) floatingToolbar:(BLCAwesomeFloatingToolbar *)toolbar didSelectButtonWithTitle:(NSString *)title {
+
+
+- (void) floatingToolbar:(BLCAwesomeFloatingToolbar *)toolbar didSelectButton:(UIButton *)button {
+    
+    NSString *title = button.currentTitle; //grab title off button that was passed thru
+    
     if ([title isEqual:kBLCWebBrowserBackString]) {
         [self.webview goBack];
     } else if ([title isEqual:kBLCWebBrowserForwardString]) {
@@ -95,7 +102,32 @@
     } else if ([title isEqual:kBLCWebBrowserRefreshString]) {
         [self.webview reload];
     }
+    
 }
+
+- (void) floatingToolbar:(BLCAwesomeFloatingToolbar *)toolbar didTryToPanWithOffset:(CGPoint)offset {
+    CGPoint startingPoint = toolbar.frame.origin;
+    CGPoint newPoint = CGPointMake(startingPoint.x + offset.x, startingPoint.y + offset.y);
+    
+    CGRect potentialNewFrame = CGRectMake(newPoint.x, newPoint.y, CGRectGetWidth(toolbar.frame), CGRectGetHeight(toolbar.frame));
+    
+    if (CGRectContainsRect(self.view.bounds, potentialNewFrame)) {
+        toolbar.frame = potentialNewFrame;
+    }
+}
+
+-(void) floatingToolbar:(BLCAwesomeFloatingToolbar *)toolbar didTryToPinchWithScale:(CGFloat)scale {
+    CGPoint startingPoint = toolbar.frame.origin;
+    CGRect potentialNewFrame = CGRectMake(startingPoint.x, startingPoint.y, CGRectGetWidth(toolbar.frame) * scale, CGRectGetHeight(toolbar.frame) * scale);
+    
+    if (CGRectContainsRect(self.view.bounds, potentialNewFrame) && (potentialNewFrame.size.width >= 150)) {
+        toolbar.frame = potentialNewFrame;
+    }
+    NSLog(@" pinching scaled %f", scale);
+    
+    
+}
+
 
 #pragma mark - UITextFieldDelegate
 
@@ -117,11 +149,6 @@
         
         URL = [NSURL URLWithString:[NSString stringWithFormat:@"http://%@", URLString]];
     }
-
-    // need to check IF string has @" " in it.
-    //if true use 'for' loop to replace "+" for each " ", may need to store in array first
-    // assign googlePrefix plus this phrase string to *URL
-    
     
     if (URL) {
         NSURLRequest *request = [NSURLRequest requestWithURL:URL];
@@ -146,13 +173,15 @@
 }
 
 - (void)webView:(UIWebView *)webView didFailLoadWithError:(NSError *)error {
-    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:NSLocalizedString(@"Error", @"Error")
+    if (error.code != -999) {
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:NSLocalizedString(@"Error", @"Error")
                                                     message:[error localizedDescription]
                                                    delegate:nil
                                           cancelButtonTitle:NSLocalizedString(@"OK", nil)
                                           otherButtonTitles:nil];
-    [alert show];
     
+        [alert show];
+    }
     [self updateButtonsAndTitle];
     self.frameCount--;
 }
@@ -182,11 +211,14 @@
         self.title = self.webview.request.URL.absoluteString;
     }
     
+    
     if (self.frameCount > 0) {
         [self.activityIndicator startAnimating];
     } else {
         [self.activityIndicator stopAnimating];
     }
+    
+    
     
     [self.awesomeToolbar setEnabled:[self.webview canGoBack] forButtonWithTitle:kBLCWebBrowserBackString];
     [self.awesomeToolbar setEnabled:[self.webview canGoForward] forButtonWithTitle:kBLCWebBrowserForwardString];

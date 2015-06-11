@@ -13,8 +13,10 @@
 @protocol BLCAwesomeFloatingToolbarDelegate <NSObject>
 
 @optional
+- (void) floatingToolbar:(BLCAwesomeFloatingToolbar *)toolbar didSelectButton: (UIButton *)button;
+- (void) floatingToolbar:(BLCAwesomeFloatingToolbar *)toolbar didTryToPanWithOffset:(CGPoint)offset;
+- (void) floatingToolbar:(BLCAwesomeFloatingToolbar *)toolbar didTryToPinchWithScale:(CGFloat)scale;
 
-- (void) floatingToolbar:(BLCAwesomeFloatingToolbar *)toolbar didSelectButtonWithTitle:(NSString *)title;
 
 @end
 
