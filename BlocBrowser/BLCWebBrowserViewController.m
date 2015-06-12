@@ -99,6 +99,7 @@
         [self.webview goForward];
     } else if ([title isEqual:kBLCWebBrowserStopString]) {
         [self.webview stopLoading];
+        
     } else if ([title isEqual:kBLCWebBrowserRefreshString]) {
         [self.webview reload];
     }
@@ -168,6 +169,7 @@
 }
 
 - (void)webViewDidFinishLoad:(UIWebView *)webView {
+    
     self.frameCount --;
     [self updateButtonsAndTitle];
 }
@@ -182,8 +184,9 @@
     
         [alert show];
     }
-    [self updateButtonsAndTitle];
+
     self.frameCount--;
+    [self updateButtonsAndTitle];
 }
 
 - (void) resetWebView {
